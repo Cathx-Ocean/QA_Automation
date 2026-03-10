@@ -1,34 +1,65 @@
 pipeline {
-    agent any
+    agent {
+        // Use a Python-enabled Jenkins agent (Docker or pre-installed Python)
+        docker {
+            image 'python:3.10'
+            args '-u root:root' // Run as root to install packages if needed
+        }
+    }
 
-    tools {
-        maven 'Maven'
+    environment {
+        // Virtual environment path
+        VENV_DIR = '.venv'
+        // Path to store test reports
+        REPORT_DIR = 'reports'
     }
 
     stages {
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git 'https://github.com/Cathx-Ocean/QA_Automation.git'
+                // Pull latest code from repository
+                checkout scm
             }
         }
 
-        stage('Build') {
+        stage('Install Dependencies') {
             steps {
-                sh 'mvn clean install'
+                sh '''
+                    python -m venv $VENV_DIR
+                    . $VENV_DIR/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Run Selenium Tests') {
             steps {
-                sh 'mvn test'
+                sh '''
+                    . $VENV_DIR/bin/activate
+                    mkdir -p $REPORT_DIR
+                    pytest --junitxml=$REPORT_DIR/results.xml --html=$REPORT_DIR/report.html --self-contained-html
+                '''
             }
         }
 
-        stage('Publish Results') {
+        stage('Publish Test Results') {
             steps {
-                junit 'target/surefire-reports/*.xml'
+                // Publish JUnit XML results
+                junit "$REPORT_DIR/results.xml"
+                // Archive HTML report for viewing in Jenkins
+                archiveArtifacts artifacts: "$REPORT_DIR/report.html", fingerprint: true
             }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            deleteDir()
+        }
+        failure {
+            echo 'Build failed. Check test reports for details.'
         }
     }
 }
