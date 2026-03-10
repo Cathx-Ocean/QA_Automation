@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        VENV_DIR = '.venv'
+        VENV_DIR   = '.venv'
         REPORT_DIR = 'reports'
         DRIVER_DIR = 'drivers'
     }
@@ -20,6 +20,8 @@ pipeline {
                 bat 'ver'
                 bat 'where python'
                 bat 'python --version'
+                bat 'where chromedriver || echo ChromeDriver not found'
+                bat 'where chrome || echo Chrome not found'
             }
         }
 
@@ -55,11 +57,34 @@ pipeline {
                 }
             }
         }
+
+        stage('Run Selenium Tests') {
+            steps {
+                script {
+                    bat """
+                        call %VENV_DIR%\\Scripts\\activate
+                        mkdir %REPORT_DIR%
+                        pytest --junitxml=%REPORT_DIR%\\results.xml --html=%REPORT_DIR%\\report.html --self-contained-html
+                    """
+                }
+            }
+        }
+
+        stage('Publish Test Results') {
+            steps {
+                junit allowEmptyResults: true, testResults: "${REPORT_DIR}/results.xml"
+                archiveArtifacts artifacts: "${REPORT_DIR}/report.html", fingerprint: true
+            }
+        }
     }
 
     post {
         always {
             echo '🏁 Pipeline finished'
+            cleanWs()
+        }
+        failure {
+            echo '❌ Build failed. Check test reports for details.'
         }
     }
 }
