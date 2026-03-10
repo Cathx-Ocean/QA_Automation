@@ -20,8 +20,6 @@ pipeline {
                 bat 'ver'
                 bat 'where python'
                 bat 'python --version'
-                bat 'where chromedriver'
-                bat 'where chrome'
             }
         }
 
