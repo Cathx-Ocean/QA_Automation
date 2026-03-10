@@ -33,5 +33,22 @@ pipeline {
                 '''
             }
         }
+
+        stage('Setup Python Environment') {
+            steps {
+                bat """
+                    python -m venv %VENV_DIR%
+                    call %VENV_DIR%\\Scripts\\activate
+                    pip install --upgrade pip
+                    if exist requirements.txt pip install -r requirements.txt
+                """
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '🏁 Step 2 pipeline finished'
+        }
     }
 }
