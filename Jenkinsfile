@@ -25,15 +25,6 @@ pipeline {
             }
         }
 
-        stage('PowerShell Test') {
-            steps {
-                powershell """
-                    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-                    Write-Host '✅ PowerShell is working'
-                """
-            }
-        }
-
         stage('Setup Python Environment') {
             steps {
                 bat """
@@ -45,51 +36,17 @@ pipeline {
             }
         }
 
-        stage('Ensure Google Chrome Installed') {
+        stage('Install Google Chrome') {
             steps {
-                powershell """
-                    \$chromePath1 = 'C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe'
-                    \$chromePath2 = 'C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe'
-
-                    if (-Not (Test-Path \$chromePath1) -and -Not (Test-Path \$chromePath2)) {
-                        Write-Host '⚠ Google Chrome not found. Installing...'
-                        \$chromeInstaller = "\$env:TEMP\\\\chrome_installer.exe"
-                        Invoke-WebRequest 'https://dl.google.com/chrome/install/latest/chrome_installer.exe' -OutFile \$chromeInstaller
-                        Start-Process \$chromeInstaller -ArgumentList '/silent', '/install' -Wait
-                        Remove-Item \$chromeInstaller
-                        Write-Host '✅ Google Chrome installed.'
-                    } else {
-                        Write-Host '✅ Google Chrome already installed.'
-                    }
-                """
+                powershell "Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force"
+                powershell ".\\scripts\\install_chrome.ps1"
             }
         }
 
         stage('Download Matching ChromeDriver') {
             steps {
-                powershell """
-                    if (-Not (Test-Path \$env:DRIVER_DIR)) { New-Item -ItemType Directory -Path \$env:DRIVER_DIR | Out-Null }
-
-                    \$chromePath = 'C:\\\\Program Files\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe'
-                    if (-Not (Test-Path \$chromePath)) { \$chromePath = 'C:\\\\Program Files (x86)\\\\Google\\\\Chrome\\\\Application\\\\chrome.exe' }
-                    if (-Not (Test-Path \$chromePath)) { throw '❌ Google Chrome not found after install!' }
-
-                    \$chromeVersion = (Get-Item \$chromePath).VersionInfo.ProductVersion
-                    \$majorVersion = \$chromeVersion.Split('.')[0]
-
-                    Write-Host "Detected Chrome version: \$chromeVersion"
-
-                    \$driverVersion = Invoke-RestMethod "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_\$majorVersion"
-                    Write-Host "Matching ChromeDriver version: \$driverVersion"
-
-                    \$zipPath = "\$env:DRIVER_DIR\\\\chromedriver.zip"
-                    Invoke-WebRequest "https://chromedriver.storage.googleapis.com/\$driverVersion/chromedriver_win32.zip" -OutFile \$zipPath
-
-                    Expand-Archive -Path \$zipPath -DestinationPath \$env:DRIVER_DIR -Force
-                    Remove-Item \$zipPath
-
-                    Write-Host "✅ ChromeDriver downloaded to \$env:DRIVER_DIR"
-                """
+                powershell "Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force"
+                powershell ".\\scripts\\download_chromedriver.ps1 -DriverDir '${DRIVER_DIR}'"
             }
         }
     }
