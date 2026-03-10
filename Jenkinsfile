@@ -11,6 +11,32 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                echo '✅ Checkout complete'
+            }
+        }
+
+        stage('Environment Info') {
+            steps {
+                echo '🔍 Printing environment info...'
+                bat 'ver'
+                bat 'where python'
+                bat 'python --version'
+                bat 'where chromedriver'
+                bat 'where chrome'
+            }
+        }
+
+        stage('PowerShell Test') {
+            steps {
+                powershell '''
+                    Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+                    Write-Host "✅ PowerShell is working"
+                    $chromePath1 = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                    $chromePath2 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
+                    if (Test-Path $chromePath1) { Write-Host "Chrome found at $chromePath1" }
+                    elseif (Test-Path $chromePath2) { Write-Host "Chrome found at $chromePath2" }
+                    else { Write-Host "⚠ Chrome not found" }
+                '''
             }
         }
 
@@ -27,7 +53,7 @@ pipeline {
 
         stage('Ensure Google Chrome Installed') {
             steps {
-                powershell """
+                powershell '''
                     $chromePath1 = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
                     $chromePath2 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
 
@@ -37,17 +63,17 @@ pipeline {
                         Invoke-WebRequest "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $chromeInstaller
                         Start-Process $chromeInstaller -ArgumentList "/silent", "/install" -Wait
                         Remove-Item $chromeInstaller
-                        Write-Host "Google Chrome installed."
+                        Write-Host "✅ Google Chrome installed."
                     } else {
-                        Write-Host "Google Chrome already installed."
+                        Write-Host "✅ Google Chrome already installed."
                     }
-                """
+                '''
             }
         }
 
         stage('Download Matching ChromeDriver') {
             steps {
-                powershell """
+                powershell '''
                     if (-Not (Test-Path $env:DRIVER_DIR)) { New-Item -ItemType Directory -Path $env:DRIVER_DIR | Out-Null }
 
                     $chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
@@ -68,8 +94,8 @@ pipeline {
                     Expand-Archive -Path $zipPath -DestinationPath $env:DRIVER_DIR -Force
                     Remove-Item $zipPath
 
-                    Write-Host "ChromeDriver downloaded to $env:DRIVER_DIR"
-                """
+                    Write-Host "✅ ChromeDriver downloaded to $env:DRIVER_DIR"
+                '''
             }
         }
 
@@ -95,8 +121,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up workspace...'
-            deleteDir()
+            echo '🏁 Pipeline finished'
         }
     }
 }
