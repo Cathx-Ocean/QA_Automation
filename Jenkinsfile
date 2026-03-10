@@ -20,6 +20,8 @@ pipeline {
                 bat 'ver'
                 bat 'where python'
                 bat 'python --version'
+                bat 'where chromedriver'
+                bat 'where chrome'
             }
         }
 
@@ -37,8 +39,10 @@ pipeline {
         stage('Install Google Chrome') {
             steps {
                 script {
-                    powershell 'Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force'
-                    powershell './scripts/install_chrome.ps1'
+                    def cmd1 = 'Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force'
+                    def cmd2 = './scripts/install_chrome.ps1'
+                    powershell cmd1
+                    powershell cmd2
                 }
             }
         }
@@ -46,8 +50,10 @@ pipeline {
         stage('Download Matching ChromeDriver') {
             steps {
                 script {
-                    powershell 'Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force'
-                    powershell "./scripts/download_chromedriver.ps1 -DriverDir ${env.DRIVER_DIR}"
+                    def cmd1 = 'Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force'
+                    def cmd2 = "./scripts/download_chromedriver.ps1 -DriverDir ${env.DRIVER_DIR}"
+                    powershell cmd1
+                    powershell cmd2
                 }
             }
         }
@@ -55,7 +61,7 @@ pipeline {
 
     post {
         always {
-            echo '🏁 Step 3 pipeline finished'
+            echo '🏁 Pipeline finished'
         }
     }
 }
