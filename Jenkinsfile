@@ -99,7 +99,6 @@ pipeline {
                 bat """
                     set PATH=%CD%\\%DRIVER_DIR%;%PATH%
                     call %VENV_DIR%\\Scripts\\activate
-                    pytest -q PythonSeleniumProject
                     if not exist %REPORT_DIR% mkdir %REPORT_DIR%
                     pytest --junitxml=%REPORT_DIR%\\results.xml ^
                            --html=%REPORT_DIR%\\report.html --self-contained-html
