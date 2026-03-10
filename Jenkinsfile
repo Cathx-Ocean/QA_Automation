@@ -83,11 +83,8 @@ pipeline {
 
                     Write-Host "Detected Chrome version: $chromeVersion"
 
-                    $driverVersion = Invoke-RestMethod "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$majorVersion"
-                    Write-Host "Matching ChromeDriver version: $driverVersion"
-
                     $zipPath = "$env:DRIVER_DIR\\chromedriver.zip"
-                    Invoke-WebRequest "https://chromedriver.storage.googleapis.com/$driverVersion/chromedriver_win32.zip" -OutFile $zipPath
+                    Invoke-WebRequest "https://storage.googleapis.com/chrome-for-testing-public/$chromeVersion/win64/chromedriver-win64.zip" -OutFile $zipPath
 
                     Expand-Archive -Path $zipPath -DestinationPath $env:DRIVER_DIR -Force
                     Remove-Item $zipPath
